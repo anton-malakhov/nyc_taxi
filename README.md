@@ -8,7 +8,7 @@ This repository reflects progress of performance and design study for [1B ride N
 
 1. Install and activate [miniconda](https://docs.conda.io/en/latest/miniconda.html)
 2. Create development environment: `conda env create -n arrow-def -f conda/default-env.yml`
-3. Activate this environment: `conda actiavte arrow-def`
+3. Activate this environment: `conda activate arrow-def`
 4. Configure: `cmake -GNinja -DCMAKE_BUILD_TYPE=release -S . -B ../build`
 5. Build: `cmake --build ../build`
 6. Allocate huge memory pages: `sudo bash -c 'echo 30000 > /proc/sys/vm/nr_hugepages'`

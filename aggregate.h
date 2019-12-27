@@ -7,10 +7,8 @@
 #include <print.h>
 #include <util.h>
 #include <cassert>
-
-//#if USE_TBB
-#include <tbb/tbb.h>
-//#endif
+#include <tbb/enumerable_thread_specific.h>
+#include <parallel.h>
 
 
 // This helper is equivalent to runtime dispatch like switch((E) t) {case Args[0]:...; case Args[1]:...;...}
@@ -107,7 +105,7 @@ struct aggregate_types {
             auto init = [task,s]{return partial_aggregate_task<T>{task, std::vector<T>(s), std::vector<T>(s)};};
             tbb::enumerable_thread_specific<partial_aggregate_task<T>> p_tasks(init); // TODO: argument initializer instead
             // for all available chunks or sequential for each incoming chunk
-            tbb::parallel_for(0, column->num_chunks(), [&](auto j) {
+            parallel_for(column->num_chunks(), [&](auto j) {
                 sequential(std::static_pointer_cast<T2>(column->chunk(j)), gb, &p_tasks.local(), j);
             });
             return finalize(p_tasks.combine([](auto l, auto r) { // TODO check reduction times

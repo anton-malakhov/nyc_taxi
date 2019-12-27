@@ -1,5 +1,5 @@
 #include <arrow/api.h>
-#include <arrow/util/thread-pool.h>
+#include <arrow/util/thread_pool.h>
 
 #include <aggregate.h>
 #include <load.h>

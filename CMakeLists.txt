@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.0.0 FATAL_ERROR)
 
 project(bench CXX)
 
+set(CMAKE_CXX_FLAGS "-Wno-sign-compare -Wno-unused-variable")
+
 find_package(arrow REQUIRED arrow_shared)
 find_package(TBB REQUIRED tbb tbbmalloc tbbmalloc_proxy)
 
@@ -35,9 +37,17 @@ target_include_directories(bench_csv_tbbmalloc_huge PRIVATE . ${CMAKE_INSTALL_PR
 target_link_libraries(bench_csv_tbbmalloc_huge arrow_shared ${TBB_IMPORTED_TARGETS}
                       ${arrow_IMPORTED_TARGETS} ${CMAKE_DL_LIBS})  # Link "rt" library on Linux
 
-add_executable(bench_all benchmark.cpp)
-target_compile_features(bench_all PRIVATE cxx_std_17)
-target_compile_definitions(bench_all PRIVATE BENCH_USE_TBB_HUGE_PAGES)
-target_include_directories(bench_all PRIVATE . ${CMAKE_INSTALL_PREFIX}/include)
-target_link_libraries(bench_all arrow_shared ${TBB_IMPORTED_TARGETS}
+add_executable(bench_all_tbb benchmark.cpp)
+target_compile_features(bench_all_tbb PRIVATE cxx_std_17)
+target_compile_definitions(bench_all_tbb PRIVATE)  # no BENCH_USE_TBB_HUGE_PAGES
+target_include_directories(bench_all_tbb PRIVATE . ${CMAKE_INSTALL_PREFIX}/include)
+target_link_libraries(bench_all_tbb arrow_shared ${TBB_IMPORTED_TARGETS}
                       ${arrow_IMPORTED_TARGETS} ${CMAKE_DL_LIBS})  # Link "rt" library on Linux
+
+add_executable(bench_all_arrow benchmark.cpp)
+target_compile_features(bench_all_arrow PRIVATE cxx_std_17)
+target_compile_definitions(bench_all_arrow PRIVATE BENCH_PARALLEL_WITH_ARROW)  # no BENCH_USE_TBB_HUGE_PAGES
+target_include_directories(bench_all_arrow PRIVATE . ${CMAKE_INSTALL_PREFIX}/include)
+target_link_libraries(bench_all_arrow arrow_shared ${TBB_IMPORTED_TARGETS}
+                      ${arrow_IMPORTED_TARGETS} ${CMAKE_DL_LIBS})  # Link "rt" library on Linux
+

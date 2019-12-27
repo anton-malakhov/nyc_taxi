@@ -9,6 +9,7 @@
 
 #include <print.h>
 #include <util.h>
+#include <parallel.h>
 #include <tbb/tbb.h>
 #include <atomic>
 #include <cassert>
@@ -74,7 +75,7 @@ struct group_map : public tbb::concurrent_hash_map<K, int> {
   typename base_t::const_pointer fast_find(const typename base_t::key_type& k) {
     return this->internal_fast_find(k);
   }
-#else
+#elif TBB_INTERFACE_VERSION < 11009
   typename base_t::const_pointer fast_find( const typename base_t::key_type& key ) const {
       typedef typename base_t::hashcode_t hashcode_t;
       hashcode_t h = this->my_hash_compare.hash( key );
@@ -85,9 +86,7 @@ struct group_map : public tbb::concurrent_hash_map<K, int> {
       auto *b = this->get_bucket( h & m );
       // TODO: actually, notification is unnecessary here, just hiding double-check
       if( itt_load_word_with_acquire(b->node_list) == tbb::interface5::internal::rehash_req )
-      {
-          assert(false); // TODO
-      }
+          return 0; // expecting group_by to double check with locked insert
       n = this->search_bucket( key, b );
       if( n )
           return n->storage();
@@ -167,7 +166,7 @@ group* group_by_parallel_multiple(std::shared_ptr<arrow::Table> table, std::vect
         }
     }
 #if 1 //USE_TBB
-    tbb::parallel_for(0, num_chunks, [&,g,column0](int i) {
+    parallel_for(num_chunks, [&,g,column0](int i) {
     //for(int i = 0; i < num_chunks; i++) {
     //for(int i = num_chunks-1; i >= 0; i--) {
         auto &chunk = all_arrays[i];
@@ -249,13 +248,13 @@ void group_by_sequential_single(T2* array, group *g, group_map<T>* pg) {
 
 template <typename T, typename T2, typename T4>
 group* group_by_parallel_single(std::shared_ptr<arrow::Column> column) {
-    group_map<T> pg(2048);
+    group_map<T> pg(2048);//67108864);
     auto *ca = column->data().get();
     int num_chunks = ca->num_chunks();
     auto *g = new group(num_chunks);
 
     //for (int i = 0; i < num_chunks; i++) {
-    tbb::parallel_for(0, num_chunks, [&,ca,g](int i) {
+    parallel_for(num_chunks, [&,ca,g](int i) {
         T2 *array = (T2*)ca->chunk(i).get();
         auto &redir = g->redirection[i];
         redir.resize(array->length());

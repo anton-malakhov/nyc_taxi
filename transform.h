@@ -2,7 +2,7 @@
 #define TRANSFORM_H
 
 #include <arrow/api.h>
-#include <tbb/tbb.h>
+#include <parallel.h>
 #include <print.h>
 
 //++++++++++++++++++++++++++++++
@@ -17,7 +17,7 @@ std::shared_ptr<arrow::Table> transform(std::shared_ptr<arrow::Table> table, int
     const auto column = table->column(column_id)->data();
     arrow::ArrayVector new_chunks(column->num_chunks());
     printf("Parallel: %d, chunk[0]->length: %d\n", column->num_chunks(), column->chunk(0)->length());
-    tbb::parallel_for(0, column->num_chunks(), [&new_chunks, &column, column_id, transformation](int i){
+    parallel_for(column->num_chunks(), [&new_chunks, &column, column_id, transformation](int i){
     //for(int i = column->num_chunks()-1; i >= 0; i--){
         auto c = std::dynamic_pointer_cast<T2>(column->chunk(i)); // template
         if (c == NULL) {
